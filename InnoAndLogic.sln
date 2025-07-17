@@ -14,6 +14,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Files", "Solution 
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
 		DIrectory.build.props = DIrectory.build.props
+		run.cmd = run.cmd
 	EndProjectSection
 EndProject
 Global
@@ -65,5 +66,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {A5ECE721-0517-4D7D-8F49-DD4C034DD461}
 	EndGlobalSection
 EndGlobal

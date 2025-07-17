@@ -5,7 +5,7 @@
         <Authors>Aaron Lovi</Authors>
         <Description>A library for database persistence and migrations using PostgreSQL.</Description>
         <PackageTags>Persistence;Database;Migrations;PostgreSQL</PackageTags>
-        <RepositoryUrl>https://github.com/aaronlovi/InnoAndLogic.Persistence</RepositoryUrl>
+        <RepositoryUrl>https://github.com/aaronlovi/InnoAndLogic</RepositoryUrl>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <Copyright>Inno and Logic © 2025</Copyright>
@@ -13,9 +13,18 @@
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeSymbols>true</IncludeSymbols>
         <IncludeSource>true</IncludeSource>
+        <PackageReadmeFile>README.md</PackageReadmeFile>
     </PropertyGroup>
 
-    <ItemGroup>
+    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
         <ProjectReference Include="..\InnoAndLogic.Shared\InnoAndLogic.Shared.csproj" />
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(Configuration)' == 'Release'">
+        <PackageReference Include="InnoAndLogic.Shared" Version="1.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <None Include="README.md" Pack="true" PackagePath="/" />
     </ItemGroup>
 </Project>
