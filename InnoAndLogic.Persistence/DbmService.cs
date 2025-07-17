@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 
 namespace InnoAndLogic.Persistence;
 
-public sealed class DbmService : IDbmService {
+public class DbmService : IDbmService {
     private readonly ILogger<DbmService> _logger;
     private readonly PostgresExecutor _exec;
     private readonly SemaphoreSlim _generatorMutex;
