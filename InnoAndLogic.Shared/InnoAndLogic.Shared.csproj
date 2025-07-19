@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>InnoAndLogic.Shared</PackageId>
-        <Version>1.0.3</Version>
+        <Version>1.0.4</Version>
         <Authors>Aaron Lovi</Authors>
         <Description>A shared library providing reusable models, enums, and utilities for .NET projects.</Description>
         <PackageTags>Shared;Utilities;Models;Enums;Reusable;Library;.NET</PackageTags>
@@ -17,6 +17,10 @@
         <PublishRepositoryUrl>true</PublishRepositoryUrl>
         <EmbedUntrackedSources>true</EmbedUntrackedSources>
         <Deterministic>true</Deterministic>
+        <Title>Utilities Library code</Title>
+        <RepositoryType>git</RepositoryType>
+        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+        <AnalysisLevel>none</AnalysisLevel>
     </PropertyGroup>
 
     <ItemGroup>
