@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <PackageId>InnoAndLogic.Persistence</PackageId>
-        <Version>1.0.2</Version>
+        <Version>1.0.4</Version>
         <Authors>Aaron Lovi</Authors>
         <Description>A library for database persistence and migrations using PostgreSQL.</Description>
         <PackageTags>Persistence;Database;Migrations;PostgreSQL</PackageTags>
@@ -9,7 +9,6 @@
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
         <Copyright>Inno and Logic © 2025</Copyright>
-        <TargetFramework>net8.0</TargetFramework>
         <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
         <IncludeSymbols>true</IncludeSymbols>
         <IncludeSource>true</IncludeSource>
@@ -19,12 +18,8 @@
         <Deterministic>true</Deterministic>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
+    <ItemGroup>
         <ProjectReference Include="..\InnoAndLogic.Shared\InnoAndLogic.Shared.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(Configuration)' == 'Release'">
-        <PackageReference Include="InnoAndLogic.Shared" Version="1.0.2" />
     </ItemGroup>
 
     <ItemGroup>
