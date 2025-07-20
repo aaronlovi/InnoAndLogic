@@ -1,34 +1,37 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
-    <PropertyGroup>
-        <PackageId>InnoAndLogic.Shared</PackageId>
-        <Version>1.0.4</Version>
-        <Authors>Aaron Lovi</Authors>
-        <Description>A shared library providing reusable models, enums, and utilities for .NET projects.</Description>
-        <PackageTags>Shared;Utilities;Models;Enums;Reusable;Library;.NET</PackageTags>
-        <RepositoryUrl>https://github.com/aaronlovi/InnoAndLogic</RepositoryUrl>
-        <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
-        <Copyright>Inno and Logic © 2025</Copyright>
-        <TargetFramework>net8.0</TargetFramework>
-        <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-        <IncludeSymbols>true</IncludeSymbols>
-        <IncludeSource>true</IncludeSource>
-        <PackageReadmeFile>README.md</PackageReadmeFile>
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
-        <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        <Deterministic>true</Deterministic>
-        <Title>Utilities Library code</Title>
-        <RepositoryType>git</RepositoryType>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
-        <AnalysisLevel>none</AnalysisLevel>
-        <GenerateDocumentationFile>true</GenerateDocumentationFile>
-        <ProjectUrl>https://github.com/aaronlovi/InnoAndLogic</ProjectUrl>
-        <PackageIcon>icon.png</PackageIcon>
-        <DebugType>portable</DebugType>
-    </PropertyGroup>
+  <PropertyGroup>
+    <PackageId>InnoAndLogic.Shared</PackageId>
+    <Version>1.0.5</Version>
+    <Authors>Aaron Lovi</Authors>
+    <Description>A shared library providing reusable models, enums, and utilities for .NET projects.</Description>
+    <PackageTags>Shared;Utilities;Models;Enums;Reusable;Library;.NET</PackageTags>
+    <RepositoryUrl>https://github.com/aaronlovi/InnoAndLogic</RepositoryUrl>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Inno and Logic © 2025</Copyright>
+    <TargetFramework>net8.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <Deterministic>true</Deterministic>
+    <Title>Utilities Library code</Title>
+    <RepositoryType>git</RepositoryType>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <ProjectUrl>https://github.com/aaronlovi/InnoAndLogic</ProjectUrl>
+    <PackageIcon>icon.png</PackageIcon>
+    <DebugType>portable</DebugType>
+  </PropertyGroup>
 
-    <ItemGroup>
-        <None Include="README.md" Pack="true" PackagePath="/" />
-        <None Include="icon.png" Pack="true" PackagePath="/" />
-    </ItemGroup>
+  <PropertyGroup Condition="'$(GITHUB_ACTIONS)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="/" />
+    <None Include="icon.png" Pack="true" PackagePath="/" />
+  </ItemGroup>
 </Project>
