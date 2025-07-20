@@ -53,6 +53,16 @@ jobs:
         echo "Listing contents of NuGet directory:"
         ls -R ${{ env.NuGetDirectory }}
 
+    - name: Inspect NuGet Package Contents
+      run: |
+        foreach ($file in Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg) {
+            Write-Host "Inspecting $file"
+            mkdir temp
+            Expand-Archive -Path $file.FullName -DestinationPath ./temp
+            Get-ChildItem -Recurse ./temp
+            Remove-Item -Recurse -Force ./temp
+        }
+
     # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v4
       with:
@@ -85,7 +95,7 @@ jobs:
       # If some rules are not applicable, you can disable them
       # using the --excluded-rules or --excluded-rule-ids option
       - name: Validate package
-        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
+        run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg").FullName
 
       - name: Validate Source Link
         run: dotnet sourcelink test $(Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
