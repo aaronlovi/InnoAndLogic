@@ -47,6 +47,12 @@ jobs:
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
 
+    # Debugging step to list files in the NuGet directory
+    - name: List NuGet Directory Contents
+      run: |
+        echo "Listing contents of NuGet directory:"
+        ls -R ${{ env.NuGetDirectory }}
+
     # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v4
       with:
