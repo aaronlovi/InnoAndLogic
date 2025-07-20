@@ -22,6 +22,7 @@
         <ProjectUrl>https://github.com/aaronlovi/InnoAndLogic</ProjectUrl>
         <PackageIcon>icon.png</PackageIcon>
         <DebugType>portable</DebugType>
+        <AllowedOutputExtensionsInPackageBuildOutputFolder>.dll;.exe;.xml;.pdb</AllowedOutputExtensionsInPackageBuildOutputFolder>
     </PropertyGroup>
 
     <ItemGroup>
