@@ -46,7 +46,13 @@ jobs:
 
     # List build output
     - name: List Build Output
-      run: ls -R bin/Release/net8.0
+      run: |
+        echo "Listing build output for InnoAndLogic.Shared:"
+        ls -R InnoAndLogic.Shared/bin/Release/net8.0
+        echo "Listing build output for InnoAndLogic.Persistence:"
+        ls -R InnoAndLogic.Persistence/bin/Release/net8.0
+        echo "Listing build output for InnoAndLogic.DistributedCaching:"
+        ls -R InnoAndLogic.DistributedCaching/bin/Release/net8.0
 
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
