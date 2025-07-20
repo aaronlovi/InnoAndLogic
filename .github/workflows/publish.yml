@@ -117,6 +117,9 @@ jobs:
       # - name: Validate package
       #   run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg").FullName
 
+      - name: Install Source Link Tool
+        run: dotnet tool install --global dotnet-sourcelink
+
       - name: Validate Source Link
         run: dotnet sourcelink test $(Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
