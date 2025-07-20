@@ -44,6 +44,10 @@ jobs:
     - name: Build Solution
       run: dotnet build --configuration Release
 
+    # List build output
+    - name: List Build Output
+      run: ls -R bin/Release/net8.0
+
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
 
@@ -56,6 +60,16 @@ jobs:
     - name: Inspect NuGet Package Contents
       run: |
         foreach ($file in Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg) {
+            Write-Host "Inspecting $file"
+            mkdir temp
+            Expand-Archive -Path $file.FullName -DestinationPath ./temp
+            Get-ChildItem -Recurse ./temp
+            Remove-Item -Recurse -Force ./temp
+        }
+
+    - name: Inspect Symbol Package Contents
+      run: |
+        foreach ($file in Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.snupkg) {
             Write-Host "Inspecting $file"
             mkdir temp
             Expand-Archive -Path $file.FullName -DestinationPath ./temp
