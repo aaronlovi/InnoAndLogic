@@ -32,7 +32,7 @@ jobs:
       run: pwd
 
     - name: List Files
-      run: dir /s
+      run: Get-ChildItem -Recurse
 
     # Install the .NET SDK indicated in the global.json file
     - name: Setup .NET
@@ -48,11 +48,11 @@ jobs:
     - name: List Build Output
       run: |
         echo "Listing build output for InnoAndLogic.Shared:"
-        dir InnoAndLogic.Shared\bin\Release\net8.0 /s
+        Get-ChildItem InnoAndLogic.Shared\bin\Release\net8.0 -Recurse
         echo "Listing build output for InnoAndLogic.Persistence:"
-        dir InnoAndLogic.Persistence\bin\Release\net8.0 /s
+        Get-ChildItem InnoAndLogic.Persistence\bin\Release\net8.0 -Recurse
         echo "Listing build output for InnoAndLogic.DistributedCaching:"
-        dir InnoAndLogic.DistributedCaching\bin\Release\net8.0 /s
+        Get-ChildItem InnoAndLogic.DistributedCaching\bin\Release\net8.0 -Recurse
 
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
@@ -61,7 +61,7 @@ jobs:
     - name: List NuGet Directory Contents
       run: |
         echo "Listing contents of NuGet directory:"
-        dir ${{ env.NuGetDirectory }} /s
+        Get-ChildItem ${{ env.NuGetDirectory }} -Recurse
 
     - name: Inspect NuGet Package Contents
       run: |
