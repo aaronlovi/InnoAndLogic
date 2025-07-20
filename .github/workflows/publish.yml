@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   create_nuget:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
       with:
@@ -32,7 +32,7 @@ jobs:
       run: pwd
 
     - name: List Files
-      run: ls -R
+      run: dir /s
 
     # Install the .NET SDK indicated in the global.json file
     - name: Setup .NET
@@ -48,11 +48,11 @@ jobs:
     - name: List Build Output
       run: |
         echo "Listing build output for InnoAndLogic.Shared:"
-        ls -R InnoAndLogic.Shared/bin/Release/net8.0
+        dir InnoAndLogic.Shared\bin\Release\net8.0 /s
         echo "Listing build output for InnoAndLogic.Persistence:"
-        ls -R InnoAndLogic.Persistence/bin/Release/net8.0
+        dir InnoAndLogic.Persistence\bin\Release\net8.0 /s
         echo "Listing build output for InnoAndLogic.DistributedCaching:"
-        ls -R InnoAndLogic.DistributedCaching/bin/Release/net8.0
+        dir InnoAndLogic.DistributedCaching\bin\Release\net8.0 /s
 
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - run: dotnet pack --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
@@ -61,7 +61,7 @@ jobs:
     - name: List NuGet Directory Contents
       run: |
         echo "Listing contents of NuGet directory:"
-        ls -R ${{ env.NuGetDirectory }}
+        dir ${{ env.NuGetDirectory }} /s
 
     - name: Inspect NuGet Package Contents
       run: |
@@ -92,7 +92,7 @@ jobs:
         path: ${{ env.NuGetDirectory }}/*.nupkg
 
   validate_nuget:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [ create_nuget ]
     steps:
       # Install the .NET SDK indicated in the global.json file
@@ -124,7 +124,7 @@ jobs:
         run: dotnet sourcelink test $(Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
   run_test:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
@@ -139,26 +139,19 @@ jobs:
       run: dotnet test --configuration Release
 
   deploy:
-    # Publish only when creating a GitHub Release
-    # https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-a-repository
-    # You can update this logic if you want to manage releases differently
+    # Publish only when a new release is created
     if: github.event_name == 'release'
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     needs: [ validate_nuget, run_test ]
     steps:
-      # Download the NuGet package created in the previous job
       - uses: actions/download-artifact@v4
         with:
           name: nuget
           path: ${{ env.NuGetDirectory }}
 
-      # Install the .NET SDK indicated in the global.json file
       - name: Setup .NET Core
         uses: actions/setup-dotnet@v4
 
-      # Publish all NuGet packages to NuGet.org
-      # Use --skip-duplicate to prevent errors if a package with the same version already exists.
-      # If you retry a failed workflow, already published packages will be skipped without error.
       - name: Publish NuGet package
         run: |
           foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg, *.snupkg)) {
