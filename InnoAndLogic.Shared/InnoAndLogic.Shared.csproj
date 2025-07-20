@@ -24,6 +24,7 @@
         <GenerateDocumentationFile>true</GenerateDocumentationFile>
         <ProjectUrl>https://github.com/aaronlovi/InnoAndLogic</ProjectUrl>
         <PackageIcon>icon.png</PackageIcon>
+        <DebugType>portable</DebugType>
     </PropertyGroup>
 
     <ItemGroup>
