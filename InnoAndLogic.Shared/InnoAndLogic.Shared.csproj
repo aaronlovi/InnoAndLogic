@@ -21,9 +21,13 @@
         <RepositoryType>git</RepositoryType>
         <SymbolPackageFormat>snupkg</SymbolPackageFormat>
         <AnalysisLevel>none</AnalysisLevel>
+        <GenerateDocumentationFile>true</GenerateDocumentationFile>
+        <ProjectUrl>https://github.com/aaronlovi/InnoAndLogic</ProjectUrl>
+        <PackageIcon>icon.png</PackageIcon>
     </PropertyGroup>
 
     <ItemGroup>
         <None Include="README.md" Pack="true" PackagePath="/" />
+        <None Include="icon.png" Pack="true" PackagePath="/" />
     </ItemGroup>
 </Project>

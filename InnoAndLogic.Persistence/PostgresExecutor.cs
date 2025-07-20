@@ -9,31 +9,36 @@ using Npgsql;
 
 namespace InnoAndLogic.Persistence;
 
+/// <summary>
+/// Executes PostgreSQL statements and manages database connections.
+/// </summary>
 public class PostgresExecutor : IDisposable {
     private readonly ILogger<PostgresExecutor> _logger;
-    private readonly int _maxRetries = 5; // 0 = unlimited
-    private readonly int _retryDelayMilliseconds = 1000; // 0 = no delay
-    private readonly int _maxConcurrentStatements = 20;
-    private readonly int _maxConcurrentReadStatements = 20;
+    private readonly int _maxRetries;
+    private readonly int _retryDelayMilliseconds;
+    private readonly int _maxConcurrentStatements;
+    private readonly int _maxConcurrentReadStatements;
     private readonly string _connectionString;
-
     private readonly SemaphoreSlim _connectionLimiter;
     private readonly SemaphoreSlim _readConnectionLimiter;
     private bool _disposedValue;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PostgresExecutor"/> class.
+    /// </summary>
+    /// <param name="dbOptions">The database options containing configuration settings.</param>
+    /// <param name="loggerFactory">The logger factory used to create loggers for the executor.</param>
     public PostgresExecutor(IOptions<DatabaseOptions> dbOptions, ILoggerFactory loggerFactory) {
-        _connectionString = dbOptions.Value.ConnectionString;
-        if (string.IsNullOrEmpty(_connectionString))
-            throw new InvalidOperationException("Connection string is empty");
-
         _logger = loggerFactory.CreateLogger<PostgresExecutor>();
         _logger.LogInformation("Persistence is enabled");
 
-        _maxRetries = dbOptions.Value.MaxRetries;
-        _retryDelayMilliseconds = dbOptions.Value.RetryDelayMilliseconds;
-        _maxConcurrentStatements = dbOptions.Value.MaxConcurrentStatements;
-        _maxConcurrentReadStatements = dbOptions.Value.MaxConcurrentReadStatements;
-
+        DatabaseOptions options = dbOptions.Value;
+        _maxRetries = options.MaxRetries;
+        _retryDelayMilliseconds = options.RetryDelayMilliseconds;
+        _maxConcurrentStatements = options.MaxConcurrentStatements;
+        _maxConcurrentReadStatements = options.MaxConcurrentReadStatements;
+        _connectionString = options.ConnectionString;
+        
         _logger.LogInformation("DatabaseManager settings: (maxRetries:{MaxRetries}, retryDelayMilliseconds: {RetryDelayMilliseconds}, maxConcurrentStatements: {MaxConcurrentStatements}, maxConcurrentReadStatements: {MaxConcurrentReadStatements})",
             _maxRetries, _retryDelayMilliseconds, _maxConcurrentStatements, _maxConcurrentReadStatements);
 
@@ -41,8 +46,17 @@ public class PostgresExecutor : IDisposable {
         _readConnectionLimiter = new(_maxConcurrentReadStatements);
     }
 
+    /// <summary>
+    /// Gets a value indicating whether the executor is enabled.
+    /// </summary>
     public bool IsEnabled => !string.IsNullOrEmpty(_connectionString);
 
+    /// <summary>
+    /// Executes a query statement asynchronously.
+    /// </summary>
+    /// <param name="stmt">The statement to execute.</param>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of the statement execution.</returns>
     public async Task<DbStmtResult> ExecuteQuery(IPostgresStatement stmt, CancellationToken ct) {
         try {
             using var limiter = new SemaphoreLocker(_readConnectionLimiter);
@@ -56,6 +70,14 @@ public class PostgresExecutor : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Executes a query statement with retry logic asynchronously.
+    /// </summary>
+    /// <param name="stmt">The statement to execute.</param>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
+    /// <param name="transaction">Optional transaction to use for the execution.</param>
+    /// <returns>The result of the statement execution.</returns>
     public async Task<DbStmtResult> ExecuteQueryWithRetry(
         IPostgresStatement stmt,
         CancellationToken ct,
@@ -86,6 +108,12 @@ public class PostgresExecutor : IDisposable {
     }
 
 
+    /// <summary>
+    /// Executes a statement asynchronously.
+    /// </summary>
+    /// <param name="stmt">The statement to execute.</param>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of the statement execution.</returns>
     public async Task<DbStmtResult> Execute(IPostgresStatement stmt, CancellationToken ct) {
         try {
             using var limiter = new SemaphoreLocker(_connectionLimiter);
@@ -100,6 +128,13 @@ public class PostgresExecutor : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Executes a statement within a transaction asynchronously.
+    /// </summary>
+    /// <param name="stmt">The statement to execute.</param>
+    /// <param name="transaction">The transaction to use for the execution.</param>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The result of the statement execution.</returns>
     public async Task<DbStmtResult> ExecuteUnderTransaction(IPostgresStatement stmt, PostgresTransaction transaction, CancellationToken ct) {
         try {
             NpgsqlConnection connection = transaction.Connection;
@@ -110,6 +145,14 @@ public class PostgresExecutor : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Executes a statement with retry logic asynchronously.
+    /// </summary>
+    /// <param name="stmt">The statement to execute.</param>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
+    /// <param name="transaction">Optional transaction to use for the execution.</param>
+    /// <returns>The result of the statement execution.</returns>
     public async Task<DbStmtResult> ExecuteWithRetry(
         IPostgresStatement stmt,
         CancellationToken ct,
@@ -139,10 +182,23 @@ public class PostgresExecutor : IDisposable {
         return DbStmtResult.StatementFailure(ErrorCodes.TooManyRetries, "Too many retries");
     }
 
+    /// <summary>
+    /// Executes a statement within a transaction with retry logic asynchronously.
+    /// </summary>
+    /// <param name="stmt">The statement to execute.</param>
+    /// <param name="transaction">The transaction to use for the execution.</param>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
+    /// <returns>The result of the statement execution.</returns>
     public Task<DbStmtResult> ExecuteUnderTransactionWithRetry(
         IPostgresStatement stmt, PostgresTransaction transaction, CancellationToken ct, int? overrideMaxRetries = null)
         => ExecuteWithRetry(stmt, ct, overrideMaxRetries, transaction);
 
+    /// <summary>
+    /// Begins a new transaction asynchronously.
+    /// </summary>
+    /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
+    /// <returns>The created transaction.</returns>
     public async Task<PostgresTransaction> BeginTransaction(CancellationToken ct) {
         using var limiter = new SemaphoreLocker(_connectionLimiter);
         await limiter.Acquire(ct);
@@ -156,6 +212,10 @@ public class PostgresExecutor : IDisposable {
 
     #region IDisposable implementation
 
+    /// <summary>
+    /// Releases the resources used by the executor.
+    /// </summary>
+    /// <param name="disposing">A value indicating whether the method is being called from the <see cref="Dispose()"/> method.</param>
     protected virtual void Dispose(bool disposing) {
         if (!_disposedValue) {
             if (disposing) {
@@ -169,6 +229,9 @@ public class PostgresExecutor : IDisposable {
         }
     }
 
+    /// <summary>
+    /// Releases the resources used by the executor.
+    /// </summary>
     public void Dispose() {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(disposing: true);

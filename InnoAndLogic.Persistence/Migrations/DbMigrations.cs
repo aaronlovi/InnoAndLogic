@@ -22,6 +22,24 @@ public class DbMigrations {
     private readonly string _databaseSchema;
     private readonly List<Assembly> _externalMigrationAssemblies;
 
+    /// <summary>
+    /// Handles database migrations for the application.
+    /// </summary>
+    /// <remarks>
+    /// This class uses the Evolve library to apply database migrations.
+    /// Migrations are scripts that update the structure of the database,
+    /// and are located in the "Migrations" directory.
+    /// The connection string and database schema are provided via the application's configuration.
+    /// </remarks>
+    /// <param name="logsFactory">The <see cref="ILoggerFactory"/> used to create loggers for migration operations.</param>
+    /// <param name="options">The <see cref="DatabaseOptions"/> containing the connection string and schema information.</param>
+    /// <param name="externalMigrationAssemblies">
+    /// An optional collection of assemblies containing additional embedded migration scripts.
+    /// If not provided, only the default assembly is used.
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the connection string or database schema is empty.
+    /// </exception>
     public DbMigrations(
         ILoggerFactory logsFactory,
         DatabaseOptions options,
@@ -36,11 +54,21 @@ public class DbMigrations {
         if (string.IsNullOrEmpty(_databaseSchema))
             throw new InvalidOperationException("Database schema is empty");
 
-        _externalMigrationAssemblies = new List<Assembly> { typeof(DbMigrations).Assembly };
+        _externalMigrationAssemblies = [typeof(DbMigrations).Assembly];
         if (externalMigrationAssemblies != null)
             _externalMigrationAssemblies.AddRange(externalMigrationAssemblies);
     }
 
+    /// <summary>
+    /// Applies all pending database migrations.
+    /// </summary>
+    /// <remarks>
+    /// This method uses the Evolve library to apply migrations. It logs the progress and reloads
+    /// database types after migrations are applied to ensure proper introspection.
+    /// </remarks>
+    /// <exception cref="Exception">
+    /// Thrown if the migration process fails.
+    /// </exception>
     public void Up() {
         try {
             using var connection = new NpgsqlConnection(_connectionString);

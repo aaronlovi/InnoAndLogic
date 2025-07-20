@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace InnoAndLogic.Persistence;
 
+/// <summary>
+/// Provides database management services, including ID generation and database migrations.
+/// </summary>
 public class DbmService : IDbmService {
     private readonly ILogger<DbmService> _logger;
     private readonly PostgresExecutor _exec;
@@ -15,6 +18,14 @@ public class DbmService : IDbmService {
     private ulong _lastUsed;
     private ulong _endId;
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="DbmService"/> class.
+    /// </summary>
+    /// <param name="loggerFactory">The <see cref="ILoggerFactory"/> used to create loggers for the service.</param>
+    /// <param name="exec">The <see cref="PostgresExecutor"/> used to execute database statements.</param>
+    /// <param name="options">The <see cref="DatabaseOptions"/> containing the connection string and other database settings.</param>
+    /// <param name="migrations">The <see cref="DbMigrations"/> instance used to apply database migrations.</param>
+    /// <exception cref="InvalidOperationException">Thrown if the connection string is empty.</exception>
     public DbmService(
         ILoggerFactory loggerFactory,
         PostgresExecutor exec,
@@ -38,8 +49,21 @@ public class DbmService : IDbmService {
 
     #region Generator
 
+    /// <summary>
+    /// Gets the next available 64-bit ID.
+    /// </summary>
+    /// <param name="ct">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the next available 64-bit ID.</returns>
     public ValueTask<ulong> GetNextId64(CancellationToken ct) => GetIdRange64(1, ct);
 
+    /// <summary>
+    /// Gets a range of 64-bit IDs.
+    /// </summary>
+    /// <param name="count">The number of IDs to reserve.</param>
+    /// <param name="ct">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous operation. The task result contains the first ID in the reserved range.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if <paramref name="count"/> is 0.</exception>
+    /// <exception cref="InvalidOperationException">Thrown if the database fails to reserve the requested range of IDs.</exception>
     public async ValueTask<ulong> GetIdRange64(uint count, CancellationToken ct) {
         if (count == 0)
             throw new ArgumentOutOfRangeException(nameof(count), "Count cannot be 0");

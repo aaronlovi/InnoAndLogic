@@ -7,6 +7,9 @@ using Microsoft.Extensions.Logging;
 
 namespace InnoAndLogic.Persistence;
 
+/// <summary>
+/// Provides configuration methods for setting up database persistence services.
+/// </summary>
 public static class DbmHostConfig {
     /// <summary>
     /// Configures services for the DbmService and its dependencies.
@@ -14,6 +17,11 @@ public static class DbmHostConfig {
     /// <param name="services">The IServiceCollection to add services to.</param>
     /// <param name="configuration">The IConfiguration instance to bind options from.</param>
     /// <param name="sectionName">The name of the configuration section for DatabaseOptions.</param>
+    /// <param name="externalMigrationAssemblies">
+    /// An optional collection of assemblies containing additional embedded migration scripts.
+    /// If not provided, only the default assembly is used.
+    /// </param>
+    /// <returns>The updated <see cref="IServiceCollection"/> with the configured services.</returns>
     public static IServiceCollection ConfigurePersistenceServices(
         this IServiceCollection services,
         IConfiguration configuration,

@@ -5,7 +5,18 @@ using System.Security.Cryptography;
 
 namespace InnoAndLogic.Shared;
 
+/// <summary>
+/// Provides encryption and decryption utilities using AES with password-based key derivation.
+/// </summary>
 public static class Encryption {
+    /// <summary>
+    /// Encrypts the specified payload using the provided password and salt.
+    /// </summary>
+    /// <param name="password">The password used for key derivation.</param>
+    /// <param name="salt">The salt used for key derivation.</param>
+    /// <param name="payload">The data to encrypt.</param>
+    /// <returns>The encrypted data as a byte array.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the password is null or empty, the salt is 0, or the payload is empty.</exception>
     public static byte[] Encrypt(string password, long salt, byte[] payload) {
         if (string.IsNullOrEmpty(password))
             throw new ArgumentOutOfRangeException(nameof(password));
@@ -32,6 +43,14 @@ public static class Encryption {
         return ms.ToArray();
     }
 
+    /// <summary>
+    /// Decrypts the specified encrypted data using the provided password and salt.
+    /// </summary>
+    /// <param name="password">The password used for key derivation.</param>
+    /// <param name="salt">The salt used for key derivation.</param>
+    /// <param name="encrypted">The encrypted data to decrypt.</param>
+    /// <returns>The decrypted data as a byte array.</returns>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown if the password is null or empty, the salt is 0, or the encrypted data is empty.</exception>
     public static byte[] Decrypt(string password, long salt, byte[] encrypted) {
         if (string.IsNullOrEmpty(password))
             throw new ArgumentOutOfRangeException(nameof(password));
