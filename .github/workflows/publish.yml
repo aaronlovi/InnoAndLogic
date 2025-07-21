@@ -40,9 +40,30 @@ jobs:
       with:
         dotnet-version: '8.0.412'
 
+    - name: Check InnoAndLogic.Shared Version
+      id: check_shared_version
+      run: |
+        $localVersion = (Get-Content ./InnoAndLogic.Shared/InnoAndLogic.Shared.csproj | Select-String -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim()
+        $nugetVersion = dotnet list package --include-prerelease --source https://api.nuget.org/v3/index.json | Select-String -Pattern "InnoAndLogic.Shared" | ForEach-Object { ($_ -split '\s+')[1] }
+        if ($localVersion -eq $nugetVersion) {
+          Write-Host "Version $localVersion of InnoAndLogic.Shared is already published on NuGet. Skipping packaging."
+          echo "skip_shared=true" >> $GITHUB_ENV
+        } else {
+          Write-Host "Version $localVersion of InnoAndLogic.Shared is not published on NuGet. Proceeding with packaging."
+          echo "skip_shared=false" >> $GITHUB_ENV
+        }
+
     # Build the solution to ensure all projects are compiled
     - name: Build Solution
       run: dotnet build --configuration Release
+
+    # Create the NuGet package in the folder from the environment variable NuGetDirectory
+    - name: Create NuGet Packages
+      if: env.skip_shared == 'false'
+      run: dotnet pack ./InnoAndLogic.Shared/InnoAndLogic.Shared.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
+
+    - name: Create NuGet Packages for Persistence
+      run: dotnet pack ./InnoAndLogic.Persistence/InnoAndLogic.Persistence.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
 
     # List build output
     - name: List Build Output
@@ -54,36 +75,12 @@ jobs:
         echo "Listing build output for InnoAndLogic.DistributedCaching:"
         Get-ChildItem InnoAndLogic.DistributedCaching\bin\Release\net8.0 -Recurse
 
-    # Create the NuGet package in the folder from the environment variable NuGetDirectory
-    - run: dotnet pack --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
-
-    # Debugging step to list files in the NuGet directory
+    # List NuGet Directory contents
     - name: List NuGet Directory Contents
       run: |
         echo "Listing contents of NuGet directory:"
         Get-ChildItem ${{ env.NuGetDirectory }} -Recurse
 
-    - name: Inspect NuGet Package Contents
-      run: |
-        foreach ($file in Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg) {
-            Write-Host "Inspecting $file"
-            mkdir temp
-            Expand-Archive -Path $file.FullName -DestinationPath ./temp
-            Get-ChildItem -Recurse ./temp
-            Remove-Item -Recurse -Force ./temp
-        }
-
-    - name: Inspect Symbol Package Contents
-      run: |
-        foreach ($file in Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.snupkg) {
-            Write-Host "Inspecting $file"
-            mkdir temp
-            Expand-Archive -Path $file.FullName -DestinationPath ./temp
-            Get-ChildItem -Recurse ./temp
-            Remove-Item -Recurse -Force ./temp
-        }
-
-    # Publish the NuGet package as an artifact, so they can be used in the following jobs
     - uses: actions/upload-artifact@v4
       with:
         name: nuget
@@ -92,38 +89,6 @@ jobs:
         path: |
           ${{ env.NuGetDirectory }}/*.nupkg
           ${{ env.NuGetDirectory }}/*.snupkg
-
-  validate_nuget:
-    runs-on: windows-latest
-    needs: [ create_nuget ]
-    steps:
-      # Install the .NET SDK indicated in the global.json file
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.412'
-
-      # Download the NuGet package created in the previous job
-      - uses: actions/download-artifact@v4
-        with:
-          name: nuget
-          path: ${{ env.NuGetDirectory }}
-
-      # - name: Install nuget validator
-      #   run: dotnet tool update Meziantou.Framework.NuGetPackageValidation.Tool --global
-
-      # # Validate metadata and content of the NuGet package
-      # # https://www.nuget.org/packages/Meziantou.Framework.NuGetPackageValidation.Tool#readme-body-tab
-      # # If some rules are not applicable, you can disable them
-      # # using the --excluded-rules or --excluded-rule-ids option
-      # - name: Validate package
-      #   run: meziantou.validate-nuget-package (Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg").FullName
-
-      # - name: Install Source Link Tool
-      #   run: dotnet tool install --global dotnet-sourcelink
-
-      # - name: Validate Source Link
-      #   run: dotnet sourcelink test $(Get-ChildItem "${{ env.NuGetDirectory }}/*.nupkg")
 
   run_test:
     runs-on: windows-latest
@@ -144,18 +109,18 @@ jobs:
     # Publish only when a new release is created
     if: github.event_name == 'release'
     runs-on: windows-latest
-    needs: [ validate_nuget, run_test ]
+    needs: [ create_nuget, run_test ]
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: nuget
-          path: ${{ env.NuGetDirectory }}
+    - uses: actions/download-artifact@v4
+      with:
+        name: nuget
+        path: ${{ env.NuGetDirectory }}
 
-      - name: Setup .NET Core
-        uses: actions/setup-dotnet@v4
+    - name: Setup .NET Core
+      uses: actions/setup-dotnet@v4
 
-      - name: Publish NuGet package
-        run: |
-          foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg, *.snupkg)) {
-              dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
-          }
+    - name: Publish NuGet package
+      run: |
+        foreach($file in (Get-ChildItem "${{ env.NuGetDirectory }}" -Recurse -Include *.nupkg, *.snupkg)) {
+            dotnet nuget push $file --api-key "${{ secrets.NUGET_APIKEY }}" --source https://api.nuget.org/v3/index.json --skip-duplicate
+        }
