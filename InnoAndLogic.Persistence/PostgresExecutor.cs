@@ -38,7 +38,7 @@ public class PostgresExecutor : IDisposable {
         _maxConcurrentStatements = options.MaxConcurrentStatements;
         _maxConcurrentReadStatements = options.MaxConcurrentReadStatements;
         _connectionString = options.ConnectionString;
-        
+
         _logger.LogInformation("DatabaseManager settings: (maxRetries:{MaxRetries}, retryDelayMilliseconds: {RetryDelayMilliseconds}, maxConcurrentStatements: {MaxConcurrentStatements}, maxConcurrentReadStatements: {MaxConcurrentReadStatements})",
             _maxRetries, _retryDelayMilliseconds, _maxConcurrentStatements, _maxConcurrentReadStatements);
 
