@@ -40,6 +40,10 @@ jobs:
       with:
         dotnet-version: '8.0.412'
 
+    # Restore dependencies to ensure assets files are generated
+    - name: Restore Dependencies
+      run: dotnet restore
+
     - name: Check InnoAndLogic.Shared Version
       id: check_shared_version
       run: |
