@@ -8,8 +8,17 @@ using NpgsqlTypes;
 
 namespace InnoAndLogic.Persistence.Statements;
 
-internal static class DbUtils {
-    internal static NpgsqlParameter CreateNullableDateTimeParam(string paramName, DateTimeOffset? nullableDate) {
+/// <summary>
+/// Provides utility methods for working with Npgsql parameters.
+/// </summary>
+public static class DbUtils {
+    /// <summary>
+    /// Creates an Npgsql parameter for a nullable DateTimeOffset value.
+    /// </summary>
+    /// <param name="paramName">The name of the parameter.</param>
+    /// <param name="nullableDate">The nullable DateTimeOffset value.</param>
+    /// <returns>An NpgsqlParameter representing the nullable DateTimeOffset value.</returns>
+    public static NpgsqlParameter CreateNullableDateTimeParam(string paramName, DateTimeOffset? nullableDate) {
         var param = new NpgsqlParameter(paramName, NpgsqlDbType.TimestampTz) {
             Value = nullableDate?.UtcDateTime ?? (object)DBNull.Value
         };
@@ -17,7 +26,14 @@ internal static class DbUtils {
     }
 }
 
-internal abstract class DbStmtBase {
+/// <summary>
+/// Represents the base class for database statements that bind parameters.
+/// </summary>
+public abstract class DbStmtBase {
+    /// <summary>
+    /// Gets the collection of parameters bound to the database statement.
+    /// </summary>
+    /// <returns>A read-only collection of Npgsql parameters.</returns>
     protected abstract IReadOnlyCollection<NpgsqlParameter> GetBoundParameters();
 }
 
@@ -35,7 +51,7 @@ internal abstract class DbStmtBase {
 /// and execution of the reader loop, allowing derived classes to focus on the
 /// specifics of their respective queries.
 /// </remarks>
-internal abstract class QueryDbStmtBase(string _sql, string _className) : DbStmtBase, IPostgresStatement {
+public abstract class QueryDbStmtBase(string _sql, string _className) : DbStmtBase, IPostgresStatement {
     /// <summary>
     /// Executes the SQL query defined in the derived class against the provided NpgsqlConnection.
     /// </summary>
@@ -109,11 +125,15 @@ internal abstract class QueryDbStmtBase(string _sql, string _className) : DbStmt
     /// </remarks>
     protected virtual void BeforeRowProcessing(NpgsqlDataReader reader) { }
 
+    /// <summary>
+    /// Performs any necessary cleanup or finalization after processing all rows in the query result set.
+    /// </summary>
     protected virtual void AfterLastRowProcessing() { }
 
     /// <summary>
     /// Processes the current row in the query result set.
     /// </summary>
+    /// <param name="reader">The <see cref="NpgsqlDataReader"/> used to read the current row.</param>
     /// <returns>
     /// A boolean value indicating whether to continue processing rows.
     /// Returning false will stop the row processing loop.
@@ -132,7 +152,11 @@ internal abstract class QueryDbStmtBase(string _sql, string _className) : DbStmt
     protected abstract bool ProcessCurrentRow(NpgsqlDataReader reader);
 }
 
-internal abstract class NonQueryDbStmtBase(string _sql, string _className) : DbStmtBase, IPostgresStatement {
+/// <summary>
+/// Represents the base class for non-query database statements executed against a PostgreSQL database.
+/// </summary>
+public abstract class NonQueryDbStmtBase(string _sql, string _className) : DbStmtBase, IPostgresStatement {
+    /// <inheritdoc/>
     public async Task<DbStmtResult> Execute(NpgsqlConnection conn, CancellationToken ct) {
         try {
             using var cmd = new NpgsqlCommand(_sql, conn);
@@ -148,9 +172,13 @@ internal abstract class NonQueryDbStmtBase(string _sql, string _className) : DbS
     }
 }
 
-internal abstract class NonQueryBatchedDbStmtBase(string _className) : IPostgresStatement {
+/// <summary>
+/// Represents the base class for batched non-query database statements executed against a PostgreSQL database.
+/// </summary>
+public abstract class NonQueryBatchedDbStmtBase(string _className) : IPostgresStatement {
     private readonly List<NpgsqlBatchCommand> _commands = [];
 
+    /// <inheritdoc/>
     public async Task<DbStmtResult> Execute(NpgsqlConnection conn, CancellationToken ct) {
         try {
             using var batch = new NpgsqlBatch(conn);
@@ -168,6 +196,11 @@ internal abstract class NonQueryBatchedDbStmtBase(string _className) : IPostgres
         }
     }
 
+    /// <summary>
+    /// Adds a command to the batch for execution.
+    /// </summary>
+    /// <param name="sql">The SQL command to add to the batch.</param>
+    /// <param name="boundParams">The parameters to bind to the SQL command.</param>
     protected void AddCommandToBatch(string sql, IReadOnlyCollection<NpgsqlParameter> boundParams) {
         var cmd = new NpgsqlBatchCommand(sql);
         foreach (NpgsqlParameter boundParam in boundParams)
@@ -176,12 +209,28 @@ internal abstract class NonQueryBatchedDbStmtBase(string _className) : IPostgres
     }
 }
 
-internal abstract class BulkInsertDbStmtBase<T>(string _className, IReadOnlyCollection<T> _items)
+/// <summary>
+/// Represents the base class for bulk insert database statements executed against a PostgreSQL database.
+/// </summary>
+/// <typeparam name="T">The type of the items to be inserted.</typeparam>
+public abstract class BulkInsertDbStmtBase<T>(string _className, IReadOnlyCollection<T> _items)
     : IPostgresStatement
     where T : class {
+    /// <summary>
+    /// Gets the SQL COPY command used for the bulk insert operation.
+    /// </summary>
+    /// <returns>The SQL COPY command as a string.</returns>
     protected abstract string GetCopyCommand();
+
+    /// <summary>
+    /// Writes an individual item to the binary importer.
+    /// </summary>
+    /// <param name="writer">The <see cref="NpgsqlBinaryImporter"/> used to write the item.</param>
+    /// <param name="item">The item to write.</param>
+    /// <returns>A task that represents the asynchronous write operation.</returns>
     protected abstract Task WriteItemAsync(NpgsqlBinaryImporter writer, T item);
 
+    /// <inheritdoc/>
     public async Task<DbStmtResult> Execute(NpgsqlConnection conn, CancellationToken ct) {
         T? failedItem = default;
 
