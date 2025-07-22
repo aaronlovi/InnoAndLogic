@@ -50,7 +50,6 @@ jobs:
 
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - name: Create NuGet Packages
-      if: env.skip_shared == 'false'
       run: |
         dotnet pack ./InnoAndLogic.Shared/InnoAndLogic.Shared.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
         dotnet pack ./InnoAndLogic.Persistence/InnoAndLogic.Persistence.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
