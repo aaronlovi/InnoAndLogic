@@ -14,7 +14,7 @@ on:
 env:
   DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
   DOTNET_NOLOGO: true
-  NuGetDirectory: ${{ github.workspace}}/nuget
+  NuGetDirectory: ${{ github.workspace }}/nuget
 
 defaults:
   run:
@@ -22,7 +22,7 @@ defaults:
 
 jobs:
   create_nuget:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
       with:
@@ -44,19 +44,6 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore
 
-    - name: Check InnoAndLogic.Shared Version
-      id: check_shared_version
-      run: |
-        $localVersion = (Get-Content ./InnoAndLogic.Shared/InnoAndLogic.Shared.csproj | Select-String -Pattern '<Version>(.*?)</Version>' | ForEach-Object { $_.Matches.Groups[1].Value }).Trim()
-        $nugetVersion = dotnet list package --include-prerelease --source https://api.nuget.org/v3/index.json | Select-String -Pattern "InnoAndLogic.Shared" | ForEach-Object { ($_ -split '\s+')[1] }
-        if ($localVersion -eq $nugetVersion) {
-          Write-Host "Version $localVersion of InnoAndLogic.Shared is already published on NuGet. Skipping packaging."
-          echo "skip_shared=true" >> $GITHUB_ENV
-        } else {
-          Write-Host "Version $localVersion of InnoAndLogic.Shared is not published on NuGet. Proceeding with packaging."
-          echo "skip_shared=false" >> $GITHUB_ENV
-        }
-
     # Build the solution to ensure all projects are compiled
     - name: Build Solution
       run: dotnet build --configuration Release
@@ -64,26 +51,9 @@ jobs:
     # Create the NuGet package in the folder from the environment variable NuGetDirectory
     - name: Create NuGet Packages
       if: env.skip_shared == 'false'
-      run: dotnet pack ./InnoAndLogic.Shared/InnoAndLogic.Shared.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
-
-    - name: Create NuGet Packages for Persistence
-      run: dotnet pack ./InnoAndLogic.Persistence/InnoAndLogic.Persistence.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
-
-    # List build output
-    - name: List Build Output
       run: |
-        echo "Listing build output for InnoAndLogic.Shared:"
-        Get-ChildItem InnoAndLogic.Shared\bin\Release\net8.0 -Recurse
-        echo "Listing build output for InnoAndLogic.Persistence:"
-        Get-ChildItem InnoAndLogic.Persistence\bin\Release\net8.0 -Recurse
-        echo "Listing build output for InnoAndLogic.DistributedCaching:"
-        Get-ChildItem InnoAndLogic.DistributedCaching\bin\Release\net8.0 -Recurse
-
-    # List NuGet Directory contents
-    - name: List NuGet Directory Contents
-      run: |
-        echo "Listing contents of NuGet directory:"
-        Get-ChildItem ${{ env.NuGetDirectory }} -Recurse
+        dotnet pack ./InnoAndLogic.Shared/InnoAndLogic.Shared.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
+        dotnet pack ./InnoAndLogic.Persistence/InnoAndLogic.Persistence.csproj --configuration Release --include-symbols --output ${{ env.NuGetDirectory }}
 
     - uses: actions/upload-artifact@v4
       with:
@@ -95,7 +65,7 @@ jobs:
           ${{ env.NuGetDirectory }}/*.snupkg
 
   run_test:
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
@@ -112,7 +82,7 @@ jobs:
   deploy:
     # Publish only when a new release is created
     if: github.event_name == 'release'
-    runs-on: windows-latest
+    runs-on: ubuntu-latest
     needs: [ create_nuget, run_test ]
     steps:
     - uses: actions/download-artifact@v4
