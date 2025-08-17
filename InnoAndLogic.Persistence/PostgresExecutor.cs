@@ -1,18 +1,20 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using InnoAndLogic.Persistence.Statements;
 using InnoAndLogic.Shared.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Npgsql;
+
+using PgStatement = InnoAndLogic.Persistence.Statements.StatementBase<Npgsql.NpgsqlConnection, Npgsql.NpgsqlParameter>;
+using PgTransaction = InnoAndLogic.Persistence.TransactionBase<Npgsql.NpgsqlConnection, Npgsql.NpgsqlTransaction>;
 
 namespace InnoAndLogic.Persistence;
 
 /// <summary>
 /// Executes PostgreSQL statements and manages database connections.
 /// </summary>
-public class PostgresExecutor : IDisposable {
+public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTransaction, NpgsqlParameter> {
     private readonly ILogger<PostgresExecutor> _logger;
     private readonly int _maxRetries;
     private readonly int _retryDelayMilliseconds;
@@ -49,7 +51,7 @@ public class PostgresExecutor : IDisposable {
     /// <summary>
     /// Gets a value indicating whether the executor is enabled.
     /// </summary>
-    public bool IsEnabled => !string.IsNullOrEmpty(_connectionString);
+    public override bool IsEnabled => !string.IsNullOrEmpty(_connectionString);
 
     /// <summary>
     /// Executes a query statement asynchronously.
@@ -57,7 +59,8 @@ public class PostgresExecutor : IDisposable {
     /// <param name="stmt">The statement to execute.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public async Task<DbStmtResult> ExecuteQuery(IPostgresStatement stmt, CancellationToken ct) {
+    public override async Task<DbStmtResult> ExecuteQuery(
+        PgStatement stmt, CancellationToken ct) {
         try {
             using var limiter = new SemaphoreLocker(_readConnectionLimiter);
             await limiter.Acquire(ct);
@@ -78,11 +81,11 @@ public class PostgresExecutor : IDisposable {
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <param name="transaction">Optional transaction to use for the execution.</param>
     /// <returns>The result of the statement execution.</returns>
-    public async Task<DbStmtResult> ExecuteQueryWithRetry(
-        IPostgresStatement stmt,
+    public override async Task<DbStmtResult> ExecuteQueryWithRetry(
+        PgStatement stmt,
         CancellationToken ct,
         int? overrideMaxRetries = null,
-        PostgresTransaction? transaction = null) {
+        PgTransaction? transaction = null) {
         int effectiveMaxRetries = overrideMaxRetries ?? _maxRetries;
         if (effectiveMaxRetries == 0)
             effectiveMaxRetries = int.MaxValue;
@@ -107,14 +110,13 @@ public class PostgresExecutor : IDisposable {
         return DbStmtResult.StatementFailure(ErrorCodes.TooManyRetries, "Too many retries");
     }
 
-
     /// <summary>
     /// Executes a statement asynchronously.
     /// </summary>
     /// <param name="stmt">The statement to execute.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public async Task<DbStmtResult> Execute(IPostgresStatement stmt, CancellationToken ct) {
+    public override async Task<DbStmtResult> Execute(PgStatement stmt, CancellationToken ct) {
         try {
             using var limiter = new SemaphoreLocker(_connectionLimiter);
             await limiter.Acquire(ct);
@@ -135,7 +137,8 @@ public class PostgresExecutor : IDisposable {
     /// <param name="transaction">The transaction to use for the execution.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public async Task<DbStmtResult> ExecuteUnderTransaction(IPostgresStatement stmt, PostgresTransaction transaction, CancellationToken ct) {
+    public override async Task<DbStmtResult> ExecuteUnderTransaction(
+        PgStatement stmt, PgTransaction transaction, CancellationToken ct) {
         try {
             NpgsqlConnection connection = transaction.Connection;
             return await stmt.Execute(connection, ct);
@@ -153,11 +156,11 @@ public class PostgresExecutor : IDisposable {
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <param name="transaction">Optional transaction to use for the execution.</param>
     /// <returns>The result of the statement execution.</returns>
-    public async Task<DbStmtResult> ExecuteWithRetry(
-        IPostgresStatement stmt,
+    public override async Task<DbStmtResult> ExecuteWithRetry(
+        PgStatement stmt,
         CancellationToken ct,
         int? overrideMaxRetries = null,
-        PostgresTransaction? transaction = null) {
+        PgTransaction? transaction = null) {
         int effectiveMaxRetries = overrideMaxRetries ?? _maxRetries;
         if (effectiveMaxRetries == 0)
             effectiveMaxRetries = int.MaxValue;
@@ -190,8 +193,8 @@ public class PostgresExecutor : IDisposable {
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <returns>The result of the statement execution.</returns>
-    public Task<DbStmtResult> ExecuteUnderTransactionWithRetry(
-        IPostgresStatement stmt, PostgresTransaction transaction, CancellationToken ct, int? overrideMaxRetries = null)
+    public override Task<DbStmtResult> ExecuteUnderTransactionWithRetry(
+        PgStatement stmt, PgTransaction transaction, CancellationToken ct, int? overrideMaxRetries = null)
         => ExecuteWithRetry(stmt, ct, overrideMaxRetries, transaction);
 
     /// <summary>
@@ -199,7 +202,7 @@ public class PostgresExecutor : IDisposable {
     /// </summary>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The created transaction.</returns>
-    public async Task<PostgresTransaction> BeginTransaction(CancellationToken ct) {
+    public override async Task<PgTransaction> BeginTransaction(CancellationToken ct) {
         using var limiter = new SemaphoreLocker(_connectionLimiter);
         await limiter.Acquire(ct);
 
@@ -232,7 +235,7 @@ public class PostgresExecutor : IDisposable {
     /// <summary>
     /// Releases the resources used by the executor.
     /// </summary>
-    public void Dispose() {
+    public override void Dispose() {
         // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
         Dispose(disposing: true);
         GC.SuppressFinalize(this);
