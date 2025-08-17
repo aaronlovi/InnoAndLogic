@@ -1,4 +1,6 @@
-﻿namespace InnoAndLogic.Persistence;
+﻿using System.Collections.Generic;
+
+namespace InnoAndLogic.Persistence;
 
 /// <summary>
 /// Represents configuration options for database operations.
@@ -39,4 +41,10 @@ public class DatabaseOptions {
     /// This value must be provided and cannot be empty.
     /// </summary>
     public string DatabaseSchema { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Gets or sets the placeholders for database operations.
+    /// This dictionary allows dynamic replacement of placeholders in migration scripts.
+    /// </summary>
+    public Dictionary<string, string> Placeholders { get; set; } = new Dictionary<string, string>();
 }

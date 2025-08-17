@@ -21,6 +21,7 @@ public class DbMigrations {
     private readonly string _connectionString;
     private readonly string _databaseSchema;
     private readonly List<Assembly> _externalMigrationAssemblies;
+    private readonly Dictionary<string, string> _placeholders;
 
     /// <summary>
     /// Handles database migrations for the application.
@@ -57,6 +58,8 @@ public class DbMigrations {
         _externalMigrationAssemblies = [typeof(DbMigrations).Assembly];
         if (externalMigrationAssemblies != null)
             _externalMigrationAssemblies.AddRange(externalMigrationAssemblies);
+
+        _placeholders = new Dictionary<string, string>(options.Placeholders);
     }
 
     /// <summary>
@@ -76,7 +79,8 @@ public class DbMigrations {
                 EmbeddedResourceAssemblies = _externalMigrationAssemblies,
                 Schemas = [_databaseSchema],
                 IsEraseDisabled = true,
-                EnableClusterMode = true
+                EnableClusterMode = true,
+                Placeholders = _placeholders
             };
             evolve.Migrate();
 
