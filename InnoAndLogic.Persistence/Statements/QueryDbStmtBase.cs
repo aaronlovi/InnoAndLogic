@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using InnoAndLogic.Shared;
 using InnoAndLogic.Shared.Models;
 
 namespace InnoAndLogic.Persistence.Statements;
@@ -43,7 +44,7 @@ public abstract class QueryDbStmtBase<TConnectionType, TParameterType, TCommandT
     /// </summary>
     /// <returns>
     /// A Task that represents the asynchronous operation, containing the result of the query
-    /// execution as a <see cref="DbStmtResult"/>.
+    /// execution as a <see cref="Result"/>.
     /// </returns>
     /// <remarks>
     /// This method prepares the SQL command, binds any parameters required for the query, and
@@ -54,7 +55,7 @@ public abstract class QueryDbStmtBase<TConnectionType, TParameterType, TCommandT
     /// This method handles exceptions by clearing any results and returning a failure result,
     /// ensuring that the caller can gracefully handle errors.
     /// </remarks>
-    public override async Task<DbStmtResult> Execute(TConnectionType conn, CancellationToken ct) {
+    public override async Task<Result> Execute(TConnectionType conn, CancellationToken ct) {
         ClearResults();
 
         try {
@@ -75,11 +76,11 @@ public abstract class QueryDbStmtBase<TConnectionType, TParameterType, TCommandT
 
             AfterLastRowProcessing();
 
-            return DbStmtResult.StatementSuccess(numRows);
+            return Result.Success;
         } catch (Exception ex) {
             ClearResults();
             string errMsg = $"{_className} failed - {ex.Message}";
-            return DbStmtResult.StatementFailure(ErrorCodes.GenericError, errMsg);
+            return Result.Failure(ErrorCodes.GenericError, errMsg);
         }
     }
 

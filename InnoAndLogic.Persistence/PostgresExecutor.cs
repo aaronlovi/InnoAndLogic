@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
+using InnoAndLogic.Shared;
 using InnoAndLogic.Shared.Models;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -59,7 +60,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
     /// <param name="stmt">The statement to execute.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public override async Task<DbStmtResult> ExecuteQuery(
+    public override async Task<Result> ExecuteQuery(
         PgStatement stmt, CancellationToken ct) {
         try {
             using var limiter = new SemaphoreLocker(_readConnectionLimiter);
@@ -81,7 +82,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <param name="transaction">Optional transaction to use for the execution.</param>
     /// <returns>The result of the statement execution.</returns>
-    public override async Task<DbStmtResult> ExecuteQueryWithRetry(
+    public override async Task<Result> ExecuteQueryWithRetry(
         PgStatement stmt,
         CancellationToken ct,
         int? overrideMaxRetries = null,
@@ -107,7 +108,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
             //}
         }
 
-        return DbStmtResult.StatementFailure(ErrorCodes.TooManyRetries, "Too many retries");
+        return Result.Failure(ErrorCodes.TooManyRetries, "Too many retries");
     }
 
     /// <summary>
@@ -116,7 +117,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
     /// <param name="stmt">The statement to execute.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public override async Task<DbStmtResult> Execute(PgStatement stmt, CancellationToken ct) {
+    public override async Task<Result> Execute(PgStatement stmt, CancellationToken ct) {
         try {
             using var limiter = new SemaphoreLocker(_connectionLimiter);
             await limiter.Acquire(ct);
@@ -137,7 +138,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
     /// <param name="transaction">The transaction to use for the execution.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public override async Task<DbStmtResult> ExecuteUnderTransaction(
+    public override async Task<Result> ExecuteUnderTransaction(
         PgStatement stmt, PgTransaction transaction, CancellationToken ct) {
         try {
             NpgsqlConnection connection = transaction.Connection;
@@ -156,7 +157,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <param name="transaction">Optional transaction to use for the execution.</param>
     /// <returns>The result of the statement execution.</returns>
-    public override async Task<DbStmtResult> ExecuteWithRetry(
+    public override async Task<Result> ExecuteWithRetry(
         PgStatement stmt,
         CancellationToken ct,
         int? overrideMaxRetries = null,
@@ -182,7 +183,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
             //}
         }
 
-        return DbStmtResult.StatementFailure(ErrorCodes.TooManyRetries, "Too many retries");
+        return Result.Failure(ErrorCodes.TooManyRetries, "Too many retries");
     }
 
     /// <summary>
@@ -193,7 +194,7 @@ public class PostgresExecutor : StatementExecutorBase<NpgsqlConnection, NpgsqlTr
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <returns>The result of the statement execution.</returns>
-    public override Task<DbStmtResult> ExecuteUnderTransactionWithRetry(
+    public override Task<Result> ExecuteUnderTransactionWithRetry(
         PgStatement stmt, PgTransaction transaction, CancellationToken ct, int? overrideMaxRetries = null)
         => ExecuteWithRetry(stmt, ct, overrideMaxRetries, transaction);
 

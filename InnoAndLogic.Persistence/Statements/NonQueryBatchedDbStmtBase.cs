@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using InnoAndLogic.Shared;
 using InnoAndLogic.Shared.Models;
-using Npgsql;
 
 namespace InnoAndLogic.Persistence.Statements;
 
@@ -18,6 +18,11 @@ public abstract class NonQueryBatchedDbStmtBase<TConnectionType, TParameterType,
     where TBatchType : DbBatch
     where TBatchCommandType : DbBatchCommand {
     private readonly List<TBatchCommandType> _commands = [];
+
+    /// <summary>
+    /// Gets the number of rows affected by the most recent database operation.
+    /// </summary>
+    public int NumRowsAffected { get; protected set; }
 
     /// <summary>
     /// Creates a new batch for executing multiple commands in a single operation.
@@ -44,20 +49,20 @@ public abstract class NonQueryBatchedDbStmtBase<TConnectionType, TParameterType,
     public abstract TBatchCommandType CreateBatchCommand(string sql);
 
     /// <inheritdoc/>
-    public override async Task<DbStmtResult> Execute(TConnectionType conn, CancellationToken ct) {
+    public override async Task<Result> Execute(TConnectionType conn, CancellationToken ct) {
         try {
             using TBatchType batch = CreateBatch(conn);
             foreach (TBatchCommandType cmd in _commands)
                 batch.BatchCommands.Add(cmd);
-            int numRows = await batch.ExecuteNonQueryAsync(ct);
-            return DbStmtResult.StatementSuccess(numRows);
-        } catch (PostgresException ex) {
-            string errMsg = $"{_className} failed - {ex.Message}";
-            ErrorCodes failureReason = ex.SqlState == "23505" ? ErrorCodes.Duplicate : ErrorCodes.GenericError;
-            return DbStmtResult.StatementFailure(failureReason, errMsg);
+            NumRowsAffected = await batch.ExecuteNonQueryAsync(ct);
+            return Result.Success;
+        //} catch (PostgresException ex) {
+        //    string errMsg = $"{_className} failed - {ex.Message}";
+        //    ErrorCodes failureReason = ex.SqlState == "23505" ? ErrorCodes.Duplicate : ErrorCodes.GenericError;
+        //    return Result.Failure(failureReason, errMsg);
         } catch (Exception ex) {
             string errMsg = $"{_className} failed - {ex.Message}";
-            return DbStmtResult.StatementFailure(ErrorCodes.GenericError, errMsg);
+            return Result.Failure(ErrorCodes.GenericError, errMsg);
         }
     }
 
@@ -72,4 +77,7 @@ public abstract class NonQueryBatchedDbStmtBase<TConnectionType, TParameterType,
             _ = cmd.Parameters.Add(boundParam);
         _commands.Add(cmd);
     }
+
+    /// <inheritdoc/>
+    protected override IReadOnlyCollection<TParameterType> GetBoundParameters() => throw new NotImplementedException();
 }

@@ -2,7 +2,7 @@
 using Npgsql;
 using NpgsqlTypes;
 
-namespace InnoAndLogic.Persistence.Statements;
+namespace InnoAndLogic.Persistence.Statements.Postgres;
 
 /// <summary>
 /// Provides utility methods for working with Npgsql parameters.

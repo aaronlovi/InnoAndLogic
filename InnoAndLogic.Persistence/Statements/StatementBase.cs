@@ -2,6 +2,7 @@
 using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
+using InnoAndLogic.Shared;
 
 namespace InnoAndLogic.Persistence.Statements;
 
@@ -19,7 +20,7 @@ public abstract class StatementBase<TConnectionType, TParameterType>
     /// <param name="conn">The database connection to use for executing the statement.</param>
     /// <param name="ct">A <see cref="CancellationToken"/> to observe while waiting for the task to complete.</param>
     /// <returns>A task that represents the asynchronous operation. The task result contains the result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> Execute(TConnectionType conn, CancellationToken ct);
+    public abstract Task<Result> Execute(TConnectionType conn, CancellationToken ct);
 
     /// <summary>
     /// Gets the collection of parameters bound to the database statement.

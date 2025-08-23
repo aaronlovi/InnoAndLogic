@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using InnoAndLogic.Persistence.Migrations;
 using InnoAndLogic.Persistence.Statements;
+using InnoAndLogic.Shared;
 using Microsoft.Extensions.Logging;
 
 namespace InnoAndLogic.Persistence;
@@ -12,7 +13,6 @@ namespace InnoAndLogic.Persistence;
 /// </summary>
 public class DbmService : IDbmService {
     private readonly ILogger<DbmService> _logger;
-    private readonly PostgresExecutor _exec;
     private readonly SemaphoreSlim _generatorMutex;
 
     private ulong _lastUsed;
@@ -32,10 +32,12 @@ public class DbmService : IDbmService {
         DatabaseOptions options,
         DbMigrations migrations) {
         _logger = loggerFactory.CreateLogger<DbmService>();
-        _exec = exec;
-        string connStr = options.ConnectionString;
-        if (string.IsNullOrEmpty(connStr))
-            throw new InvalidOperationException("Connection string is empty");
+        Executor = exec;
+        if (options.IsConnectionStringRequired) {
+            string connStr = options.ConnectionString;
+            if (string.IsNullOrEmpty(connStr))
+                throw new InvalidOperationException("Connection string is empty");
+        }
         _generatorMutex = new(1);
 
         // Perform the DB migrations synchronously
@@ -46,6 +48,16 @@ public class DbmService : IDbmService {
             throw;
         }
     }
+
+    /// <summary>
+    /// Gets the <see cref="PostgresExecutor"/> instance used to execute PostgreSQL statements.
+    /// </summary>
+    /// <remarks>
+    /// The <see cref="PostgresExecutor"/> provides functionality for executing database queries,
+    /// managing transactions, and handling retry logic for failed operations.
+    /// This property allows access to the executor for advanced database operations.
+    /// </remarks>
+    public PostgresExecutor Executor { get; }
 
     #region Generator
 
@@ -94,7 +106,7 @@ public class DbmService : IDbmService {
         const uint BLOCK_SIZE = 65536;
         uint idRange = count - (count % BLOCK_SIZE) + BLOCK_SIZE;
         var stmt = new ReserveIdRangeStmt(idRange);
-        DbStmtResult res = await _exec.ExecuteWithRetry(stmt, ct, 0);
+        Result res = await Executor.ExecuteWithRetry(stmt, ct, 0);
 
         if (res.IsSuccess) {
             lock (_generatorMutex) {

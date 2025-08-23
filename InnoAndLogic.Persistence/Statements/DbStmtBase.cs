@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using InnoAndLogic.Shared;
 using InnoAndLogic.Shared.Models;
 using Npgsql;
 
@@ -29,7 +30,7 @@ public abstract class PostgresBulkInsertDbStmtBase<TItemType>(string _className,
     protected abstract Task WriteItemAsync(NpgsqlBinaryImporter writer, TItemType item);
 
     /// <inheritdoc/>
-    public override async Task<DbStmtResult> Execute(NpgsqlConnection conn, CancellationToken ct) {
+    public override async Task<Result> Execute(NpgsqlConnection conn, CancellationToken ct) {
         TItemType? failedItem = default;
 
         try {
@@ -42,17 +43,17 @@ public abstract class PostgresBulkInsertDbStmtBase<TItemType>(string _className,
             }
 
             _ = await writer.CompleteAsync(ct);
-            return DbStmtResult.StatementSuccess(_items.Count);
+            return Result.Success;
         } catch (PostgresException ex) {
             string errMsg = $"{_className} failed - {ex.Message}";
             ErrorCodes failureReason = ex.SqlState == "23505"
                 ? ErrorCodes.Duplicate
                 : ErrorCodes.GenericError;
-            return DbStmtResult.StatementFailure(failureReason, errMsg);
+            return Result.Failure(failureReason, errMsg);
         } catch (Exception ex) {
             string failedItemStr = failedItem?.ToString() ?? "NULL";
             string errMsg = $"{_className} failed - {ex.Message}. Item: {failedItemStr}";
-            return DbStmtResult.StatementFailure(ErrorCodes.GenericError, errMsg);
+            return Result.Failure(ErrorCodes.GenericError, errMsg);
         }
     }
 }

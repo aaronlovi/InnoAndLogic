@@ -1,6 +1,6 @@
 ﻿using Npgsql;
 
-namespace InnoAndLogic.Persistence.Statements;
+namespace InnoAndLogic.Persistence.Statements.Postgres;
 
 /// <summary>
 /// Represents a PostgreSQL-specific implementation of the <see cref="QueryDbStmtBase{TConnectionType, TParameterType, TCommandType}"/> class.

@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <PackageId>InnoAndLogic.Persistence</PackageId>
-    <Version>1.0.10</Version>
+    <Version>1.0.11</Version>
     <Authors>Aaron Lovi</Authors>
     <Description>A library for database persistence and migrations using PostgreSQL.</Description>
     <PackageTags>Persistence;Database;Migrations;PostgreSQL</PackageTags>

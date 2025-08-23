@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Threading;
 using System.Threading.Tasks;
 using InnoAndLogic.Persistence.Statements;
+using InnoAndLogic.Shared;
 
 namespace InnoAndLogic.Persistence;
 
@@ -27,7 +28,7 @@ public abstract class StatementExecutorBase<TConnectionType, TTransactionType, T
     /// <param name="stmt">The statement to execute.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> ExecuteQuery(StatementBase<TConnectionType, TParameterType> stmt, CancellationToken ct);
+    public abstract Task<Result> ExecuteQuery(StatementBase<TConnectionType, TParameterType> stmt, CancellationToken ct);
 
     /// <summary>
     /// Executes a query statement with retry logic asynchronously.
@@ -37,7 +38,7 @@ public abstract class StatementExecutorBase<TConnectionType, TTransactionType, T
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <param name="transaction">Optional transaction to use for the execution.</param>
     /// <returns>The result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> ExecuteQueryWithRetry(
+    public abstract Task<Result> ExecuteQueryWithRetry(
         StatementBase<TConnectionType, TParameterType> stmt,
         CancellationToken ct,
         int? overrideMaxRetries = null,
@@ -49,7 +50,7 @@ public abstract class StatementExecutorBase<TConnectionType, TTransactionType, T
     /// <param name="stmt">The statement to execute.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> Execute(StatementBase<TConnectionType, TParameterType> stmt, CancellationToken ct);
+    public abstract Task<Result> Execute(StatementBase<TConnectionType, TParameterType> stmt, CancellationToken ct);
 
     /// <summary>
     /// Executes a statement within a transaction asynchronously.
@@ -58,7 +59,7 @@ public abstract class StatementExecutorBase<TConnectionType, TTransactionType, T
     /// <param name="transaction">The transaction to use for the execution.</param>
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <returns>The result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> ExecuteUnderTransaction(
+    public abstract Task<Result> ExecuteUnderTransaction(
         StatementBase<TConnectionType, TParameterType> stmt,
         TransactionBase<TConnectionType, TTransactionType> transaction,
         CancellationToken ct);
@@ -71,7 +72,7 @@ public abstract class StatementExecutorBase<TConnectionType, TTransactionType, T
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <param name="transaction">Optional transaction to use for the execution.</param>
     /// <returns>The result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> ExecuteWithRetry(
+    public abstract Task<Result> ExecuteWithRetry(
         StatementBase<TConnectionType, TParameterType> stmt,
         CancellationToken ct,
         int? overrideMaxRetries = null,
@@ -85,7 +86,7 @@ public abstract class StatementExecutorBase<TConnectionType, TTransactionType, T
     /// <param name="ct">A cancellation token to observe while waiting for the task to complete.</param>
     /// <param name="overrideMaxRetries">Optional override for the maximum number of retries.</param>
     /// <returns>The result of the statement execution.</returns>
-    public abstract Task<DbStmtResult> ExecuteUnderTransactionWithRetry(
+    public abstract Task<Result> ExecuteUnderTransactionWithRetry(
         StatementBase<TConnectionType, TParameterType> stmt,
         TransactionBase<TConnectionType, TTransactionType> transaction,
         CancellationToken ct,
