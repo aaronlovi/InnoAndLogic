@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using EvolveDb;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace InnoAndLogic.Persistence.Migrations;
@@ -43,15 +44,16 @@ public class DbMigrations {
     /// </exception>
     public DbMigrations(
         ILoggerFactory logsFactory,
-        DatabaseOptions options,
+        IOptions<DatabaseOptions> options,
         IEnumerable<Assembly>? externalMigrationAssemblies = null) {
         _logger = logsFactory.CreateLogger<DbMigrations>();
 
-        _connectionString = options.ConnectionString;
+        DatabaseOptions dbOptions = options.Value;
+        _connectionString = dbOptions.ConnectionString;
         if (string.IsNullOrEmpty(_connectionString))
             throw new InvalidOperationException("Connection string is empty");
 
-        _databaseSchema = options.DatabaseSchema;
+        _databaseSchema = dbOptions.DatabaseSchema;
         if (string.IsNullOrEmpty(_databaseSchema))
             throw new InvalidOperationException("Database schema is empty");
 
@@ -59,7 +61,7 @@ public class DbMigrations {
         if (externalMigrationAssemblies != null)
             _externalMigrationAssemblies.AddRange(externalMigrationAssemblies);
 
-        _placeholders = new Dictionary<string, string>(options.Placeholders);
+        _placeholders = new Dictionary<string, string>(dbOptions.Placeholders);
     }
 
     /// <summary>

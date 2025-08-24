@@ -33,6 +33,7 @@ public class DbmService : IDbmService {
         DbMigrations migrations) {
         _logger = loggerFactory.CreateLogger<DbmService>();
         Executor = exec;
+        SchemaName = options.DatabaseSchema;
         if (options.IsConnectionStringRequired) {
             string connStr = options.ConnectionString;
             if (string.IsNullOrEmpty(connStr))
@@ -57,7 +58,12 @@ public class DbmService : IDbmService {
     /// managing transactions, and handling retry logic for failed operations.
     /// This property allows access to the executor for advanced database operations.
     /// </remarks>
-    public PostgresExecutor Executor { get; }
+    protected PostgresExecutor Executor { get; }
+    
+    /// <summary>
+    /// Gets the name of the schema associated with the current context.
+    /// </summary>
+    protected string SchemaName { get; }
 
     #region Generator
 
